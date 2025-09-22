@@ -1,47 +1,39 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 from typing import Optional
 from openai import OpenAI
+import json
 
 # Initialize FastAPI app
 app = FastAPI()
 # Initialize OpenAI client (uses credentials configured in environment)
 client = OpenAI()
 
-# Request schema for incoming interview data
+# Schema for incoming interview data
 class Request(BaseModel):
     question: str                                   # Interviewer's original question
     answer: str                                     # Candidate's response
     role: Optional[str] = None                      # (Optional) Target role
     interview_type: Optional[list[str]] = None      # (Optional) Interview type
 
+# Schema for a single follow-up question
+class FollowUp(BaseModel):
+    question: str
+    rationale: str
+
+# Schema for the full response
+class FollowUpResponse(BaseModel):
+    followups: list[FollowUp]
+
 # Model to be used for generating follow-up questions
 gpt_model = "gpt-5-nano"
 
 # System-level instructions for the model to ensure safe, professional outputs
 system_prompt = """
-    You are an interviewer assistant. Generate concise follow-up questions based on the input provided.
-    
-    Follow these rules:
-    1. Only base the follow-up questions on the candidate's answer and the interviewer's original question. Use role and interview type for context. Do not introduce unrelated topics.
-    2. Provide 1–3 concise questions, each 1–2 sentences maximum, under 50 words per question.
-    3. After each question, include a very brief rationale (1 sentence) explaining why the question is relevant.
-    4. Keep all questions neutral, professional, and safe. Avoid sensitive personal subjects, including (but not limited to) race, gender, religion, and sexual orientation.
-    5. Do not give advice, opinions, or feedback.
-    6. Make sure questions are clear, grammatically correct, and relevant to the interview context.
-    7. Output must be in strict JSON format matching this structure:
-    {
-        "followups": [
-            {
-                "question": "Your first follow-up question here",
-                "rationale": "Why this question is relevant"
-            },
-            {
-                "question": "Second follow-up question",
-                "rationale": "Rationale for second question"
-            }
-        ]
-    }
+    You are an interviewer assistant. Generate 1–3 concise follow-up questions, that are each less than 50 words, based only on the candidate's answer and the original question. 
+    Use role and interview type for context if provided. Include a 1-sentence rationale for each question. 
+    Keep questions neutral, professional, and safe. Avoid sensitive personal topics. Do not give advice or opinions. 
+    Output must be strict JSON with the same structure as this example: {"followups":[{"question":"...","rationale":"..."}, ...]}
     """
 
 @app.post("/interview/generate-followups")
@@ -59,7 +51,7 @@ def generate_followups(request: Request):
     response = client.responses.create(
         model=gpt_model,
         reasoning={"effort": "medium"},
-        max_output_tokens=500,
+        max_output_tokens=1000,
         instructions=system_prompt,
         input=f"""
             Original Question: {request.question}
@@ -68,8 +60,25 @@ def generate_followups(request: Request):
             Interview type: {interview_type}
             """
     )
+    try:
+        # Attempt to parse the model's JSON output and extract "followups" list
+        followups = FollowUpResponse.parse_raw(response.output_text)
+        #followups = FollowUpResponse.parse_raw(response.output_text)["followups"]
+    except (json.JSONDecodeError, KeyError):
+        # Handle cases where output is not valid JSON or missing expected keys
+        # Return HTTP 500 to indicate server-side failure and provide raw output for debugging
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail= 
+                {"result": "failure",
+                 "message": "Follow-up question failed.",
+                 "data": response.output_text
+                }
+        )
+
+    # Successful parsing; return follow-up questions to client
     return {
         "result": "success",
         "message": "Follow-up question generated.",
-        "data": "temp"
+        "data": followups.dict()
     }
