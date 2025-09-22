@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from typing import Optional
 from openai import OpenAI
 import json
@@ -26,7 +26,7 @@ class FollowUpResponse(BaseModel):
     followups: list[FollowUp]
 
 # Model to be used for generating follow-up questions
-gpt_model = "gpt-5-nano"
+gpt_model = "gpt-5-mini"
 
 # System-level instructions for the model to ensure safe, professional outputs
 system_prompt = """
@@ -60,19 +60,40 @@ def generate_followups(request: Request):
             Interview type: {interview_type}
             """
     )
+    # Raise error if model output is incomplete
+    if response.status == "incomplete":
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail= {
+                "result": "failure",
+                "message": "Model output incomplete.",
+                "data": response.incomplete_details.reason
+                }
+        )
+    # Get output text from model
+    output_text = response.output_text or ""
+    # Raise error if output is empty
+    if not output_text:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "result": "failure",
+                "message": "Model returned empty output."}
+        )
+
     try:
         # Attempt to parse the model's JSON output and extract "followups" list
-        followups = FollowUpResponse.parse_raw(response.output_text)
+        followups = FollowUpResponse.parse_raw(output_text)
         #followups = FollowUpResponse.parse_raw(response.output_text)["followups"]
-    except (json.JSONDecodeError, KeyError):
+    except (json.JSONDecodeError, KeyError, ValidationError):
         # Handle cases where output is not valid JSON or missing expected keys
         # Return HTTP 500 to indicate server-side failure and provide raw output for debugging
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail= 
-                {"result": "failure",
-                 "message": "Follow-up question failed.",
-                 "data": response.output_text
+            detail= {
+                "result": "failure",
+                "message": "Follow-up question failed.",
+                "data": output_text
                 }
         )
 
