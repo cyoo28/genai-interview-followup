@@ -36,18 +36,7 @@ system_prompt = """
     Output must be strict JSON with the same structure as this example: {"followups":[{"followup_question":"...","rationale":"..."}, ...]}
     """
 
-@app.post("/interview/generate-followups")
-def generate_followups(request: Request):
-    """
-    API backend to generate interview follow-up questions.
-
-    Input: Request object containing original question, answer, role, and interview type.
-    Output: JSON with generated follow-up questions and rationales.
-    """
-    # Format optional values; default to "n/a" if not provided
-    interview_type = ", ".join(request.interview_type) if request.interview_type else "n/a"
-    role = request.role if request.role else "n/a"
-    # Send request to OpenAI model with model parameters
+def call_openai(client, question: str, answer: str, role: str = "n/a", interview_type: str = "n/a"):
     try:
         # Attempt to call OpenAI API
         response = client.responses.create(
@@ -56,8 +45,8 @@ def generate_followups(request: Request):
             max_output_tokens=1000,
             instructions=system_prompt,
             input=f"""
-                Original Question: {request.question}
-                Candidate Answer: {request.answer} 
+                Original Question: {question}
+                Candidate Answer: {answer} 
                 Role: {role}
                 Interview type: {interview_type}
                 """
@@ -72,6 +61,24 @@ def generate_followups(request: Request):
                 "data": str(e)
                 }
         )
+    return response
+
+@app.post("/interview/generate-followups")
+def generate_followups(request: Request):
+    """
+    API backend to generate interview follow-up questions.
+
+    Input: Request object containing original question, answer, role, and interview type.
+    Output: JSON with generated follow-up questions and rationales.
+    """
+    # Extract required values
+    question = request.question
+    answer = request.answer
+    # Extract optional values; default to "n/a" if not provided
+    role = request.role if request.role else "n/a"
+    interview_type = ", ".join(request.interview_type) if request.interview_type else "n/a"
+    # Send request to OpenAI model with model parameters
+    response = call_openai(client, question, answer, role, interview_type)
     # Raise error if model output is incomplete
     if response.status == "incomplete":
         # Return HTTP 500 to indicate server-side failure and details for debugging
