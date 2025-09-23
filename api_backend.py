@@ -83,7 +83,7 @@ def generate_followups(request: Request):
 
     try:
         # Attempt to parse the model's JSON output and extract "followups" list
-        followups = FollowUpResponse.parse_raw(output_text)
+        followups = FollowUpResponse.model_validate_json(output_text)
         #followups = FollowUpResponse.parse_raw(response.output_text)["followups"]
     except (json.JSONDecodeError, KeyError, ValidationError):
         # Handle cases where output is not valid JSON or missing expected keys
@@ -96,10 +96,9 @@ def generate_followups(request: Request):
                 "data": output_text
                 }
         )
-
     # Successful parsing; return follow-up questions to client
     return {
         "result": "success",
         "message": "Follow-up question generated.",
-        "data": followups.dict()
+        "data": followups.model_dump()
     }
