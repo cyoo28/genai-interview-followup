@@ -51,8 +51,8 @@ invalid_type_request = {
     "interview_type": "Technical"
 }
 
-# Mock response from OpenAI (actually pulled from backend)
-mock_output_text = {
+# Valid response from OpenAI in JSON format (actually pulled from backend)
+valid_output_text = {
     "followups": [
         {
             "question": "Can you describe the RAG pipeline you implemented—retriever type, embedding model, vector store, and how you integrated retrieval results into prompts?",
@@ -69,13 +69,29 @@ mock_output_text = {
     ]
 }
 
+# Invalid response from OpenAI (list of dicts instead of JSON)
+invalid_output_text = [
+    {
+        "question": "Can you describe the RAG pipeline you implemented—retriever type, embedding model, vector store, and how you integrated retrieval results into prompts?",
+        "rationale": "To assess the technical choices and how retrieval data was incorporated into prompt design for accuracy."
+    },
+    {
+        "question": "How did you measure and validate the chatbot's accuracy, hallucination rate, and conversational quality—what metrics and evaluation procedures did you use?",
+        "rationale": "To understand how the model's real-world performance and alignment were quantitatively and qualitatively evaluated."
+    },
+    {
+        "question": "What specific guardrail mechanisms did you implement within AWS Bedrock and Vertex AI (e.g., classifiers, filters, moderated prompts), and how do they handle false positives or blocked useful content?",
+        "rationale": "To probe the safety implementation details and how trade-offs between safety and usability were managed."
+    }
+]
+
 # Test 1: Successful follow-up generation
 def test_success():
     # Mock the OpenAI client to simulate a successful response
     with patch("api_backend.client.responses.create") as mock_create:
         mock_response = MagicMock()
         mock_response.status = "succeeded"
-        mock_response.output_text = json.dumps(mock_output_text)
+        mock_response.output_text = json.dumps(valid_output_text)
         mock_create.return_value = mock_response
         # Make a request with a complete, valid request
         response = client.post("/interview/generate-followups", json=complete_request)
@@ -107,7 +123,7 @@ def test_missing_optional_fields():
     with patch("api_backend.client.responses.create") as mock_create:
         mock_response = MagicMock()
         mock_response.status = "succeeded"
-        mock_response.output_text = json.dumps(mock_output_text)
+        mock_response.output_text = json.dumps(valid_output_text)
         mock_create.return_value = mock_response
         # Make a request with a minimal, valid request
         response = client.post("/interview/generate-followups", json=minimal_request)
@@ -118,3 +134,63 @@ def test_missing_optional_fields():
         assert data["result"] == "success"
         # Check that there is at least one follow-up question returned
         assert len(data["data"]["followups"]) >= 1
+
+# Test 5: Model returns incomplete status
+def test_incomplete_status():
+    # Mock the OpenAI client to simulate an incomplete response
+    with patch("api_backend.client.responses.create") as mock_create:
+        mock_response = MagicMock()
+        mock_response.status = "incomplete"
+        mock_response.incomplete_details.reason = "timeout"
+        mock_create.return_value = mock_response
+        # Make a request with a complete request
+        response = client.post("/interview/generate-followups", json=complete_request)
+        # Check for HTTP 500 error code
+        assert response.status_code == 500
+        # Check for correct error message
+        assert response.json()["detail"]["message"] == "Model output incomplete."
+
+# Test 6: Model returns empty output
+def test_empty_output():
+    # Mock the OpenAI client to simulate an empty output
+    with patch("api_backend.client.responses.create") as mock_create:
+        mock_response = MagicMock()
+        mock_response.status = "succeeded"
+        mock_response.output_text = ""
+        mock_create.return_value = mock_response
+        # Make a request with a complete request
+        response = client.post("/interview/generate-followups", json=complete_request)
+        # Check for HTTP 500 error code
+        assert response.status_code == 500
+        # Check for correct error message
+        assert response.json()["detail"]["message"] == "Model returned empty output."
+
+# Test 7: Model returns invalid JSON or unexpected structure (list of dicts instead of JSON)
+def test_invalid_output():
+    # Mock the OpenAI client to simulate an invalid output format
+    with patch("api_backend.client.responses.create") as mock_create:
+        mock_response = MagicMock()
+        mock_response.status = "succeeded"
+        mock_response.output_text = invalid_output_text
+        mock_create.return_value = mock_response
+        # Make a request with a complete request
+        response = client.post("/interview/generate-followups", json=complete_request)
+        # Check for HTTP 500 error code
+        assert response.status_code == 500
+        # Check for correct error message
+        assert response.json()["detail"]["message"] == "Failed to parse output text." 
+
+# Test 8: Model returns empty follow-ups list
+def test_empty_followups():
+    # Mock the OpenAI client to simulate an empty follow-ups list
+    with patch("api_backend.client.responses.create") as mock_create:
+        mock_response = MagicMock()
+        mock_response.status = "succeeded"
+        mock_response.output_text = json.dumps({"followups": []})
+        mock_create.return_value = mock_response
+        # Make a request with a complete request
+        response = client.post("/interview/generate-followups", json=complete_request)
+        # Check for HTTP 500 error code
+        assert response.status_code == 500
+        # Check for correct error message
+        assert response.json()["detail"]["message"] == "Model returned empty follow-ups list." 

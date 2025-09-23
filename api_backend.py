@@ -62,6 +62,7 @@ def generate_followups(request: Request):
     )
     # Raise error if model output is incomplete
     if response.status == "incomplete":
+        # Return HTTP 500 to indicate server-side failure and details for debugging
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail= {
@@ -74,6 +75,7 @@ def generate_followups(request: Request):
     output_text = response.output_text or ""
     # Raise error if output is empty
     if not output_text:
+        # Return HTTP 500 to indicate server-side failure
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -86,16 +88,28 @@ def generate_followups(request: Request):
         followups = FollowUpResponse.model_validate_json(output_text)
         #followups = FollowUpResponse.parse_raw(response.output_text)["followups"]
     except (json.JSONDecodeError, KeyError, ValidationError):
-        # Handle cases where output is not valid JSON or missing expected keys
-        # Return HTTP 500 to indicate server-side failure and provide raw output for debugging
+        # Raise error if output is not valid JSON or missing expected keys
+        # Return HTTP 500 to indicate server-side failure and raw output for debugging
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail= {
                 "result": "failure",
-                "message": "Follow-up question failed.",
+                "message": "Failed to parse output text.",
                 "data": output_text
                 }
         )
+    
+    # Raise error if followups is empty
+    if not followups.followups:
+        # Return HTTP 500 to indicate server-side failure
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "result": "failure",
+                "message": "Model returned empty follow-ups list."
+            }
+    )
+
     # Successful parsing; return follow-up questions to client
     return {
         "result": "success",
