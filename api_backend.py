@@ -18,7 +18,7 @@ class Request(BaseModel):
 
 # Schema for a single follow-up question
 class FollowUp(BaseModel):
-    question: str
+    followup_question: str
     rationale: str
 
 # Schema for the full response
@@ -33,7 +33,7 @@ system_prompt = """
     You are an interviewer assistant. Generate 1–3 concise follow-up questions, that are each less than 50 words, based only on the candidate's answer and the original question. 
     Use role and interview type for context if provided. Include a 1-sentence rationale for each question. 
     Keep questions neutral, professional, and safe. Avoid sensitive personal topics. Do not give advice or opinions. 
-    Output must be strict JSON with the same structure as this example: {"followups":[{"question":"...","rationale":"..."}, ...]}
+    Output must be strict JSON with the same structure as this example: {"followups":[{"followup_question":"...","rationale":"..."}, ...]}
     """
 
 @app.post("/interview/generate-followups")

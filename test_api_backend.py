@@ -55,15 +55,15 @@ invalid_type_request = {
 valid_output_text = {
     "followups": [
         {
-            "question": "Can you describe the RAG pipeline you implemented—retriever type, embedding model, vector store, and how you integrated retrieval results into prompts?",
+            "followup_question": "Can you describe the RAG pipeline you implemented—retriever type, embedding model, vector store, and how you integrated retrieval results into prompts?",
             "rationale": "To assess the technical choices and how retrieval data was incorporated into prompt design for accuracy."
         },
         {
-            "question": "How did you measure and validate the chatbot's accuracy, hallucination rate, and conversational quality—what metrics and evaluation procedures did you use?",
+            "followup_question": "How did you measure and validate the chatbot's accuracy, hallucination rate, and conversational quality—what metrics and evaluation procedures did you use?",
             "rationale": "To understand how the model's real-world performance and alignment were quantitatively and qualitatively evaluated."
         },
         {
-            "question": "What specific guardrail mechanisms did you implement within AWS Bedrock and Vertex AI (e.g., classifiers, filters, moderated prompts), and how do they handle false positives or blocked useful content?",
+            "followup_question": "What specific guardrail mechanisms did you implement within AWS Bedrock and Vertex AI (e.g., classifiers, filters, moderated prompts), and how do they handle false positives or blocked useful content?",
             "rationale": "To probe the safety implementation details and how trade-offs between safety and usability were managed."
         }
     ]
@@ -72,15 +72,15 @@ valid_output_text = {
 # Invalid response from OpenAI (list of dicts instead of JSON)
 invalid_output_text = [
     {
-        "question": "Can you describe the RAG pipeline you implemented—retriever type, embedding model, vector store, and how you integrated retrieval results into prompts?",
+        "followup_question": "Can you describe the RAG pipeline you implemented—retriever type, embedding model, vector store, and how you integrated retrieval results into prompts?",
         "rationale": "To assess the technical choices and how retrieval data was incorporated into prompt design for accuracy."
     },
     {
-        "question": "How did you measure and validate the chatbot's accuracy, hallucination rate, and conversational quality—what metrics and evaluation procedures did you use?",
+        "followup_question": "How did you measure and validate the chatbot's accuracy, hallucination rate, and conversational quality—what metrics and evaluation procedures did you use?",
         "rationale": "To understand how the model's real-world performance and alignment were quantitatively and qualitatively evaluated."
     },
     {
-        "question": "What specific guardrail mechanisms did you implement within AWS Bedrock and Vertex AI (e.g., classifiers, filters, moderated prompts), and how do they handle false positives or blocked useful content?",
+        "followup_question": "What specific guardrail mechanisms did you implement within AWS Bedrock and Vertex AI (e.g., classifiers, filters, moderated prompts), and how do they handle false positives or blocked useful content?",
         "rationale": "To probe the safety implementation details and how trade-offs between safety and usability were managed."
     }
 ]
