@@ -48,18 +48,30 @@ def generate_followups(request: Request):
     interview_type = ", ".join(request.interview_type) if request.interview_type else "n/a"
     role = request.role if request.role else "n/a"
     # Send request to OpenAI model with model parameters
-    response = client.responses.create(
-        model=gpt_model,
-        reasoning={"effort": "medium"},
-        max_output_tokens=1000,
-        instructions=system_prompt,
-        input=f"""
-            Original Question: {request.question}
-            Candidate Answer: {request.answer} 
-            Role: {role}
-            Interview type: {interview_type}
-            """
-    )
+    try:
+        # Attempt to call OpenAI API
+        response = client.responses.create(
+            model=gpt_model,
+            reasoning={"effort": "medium"},
+            max_output_tokens=1000,
+            instructions=system_prompt,
+            input=f"""
+                Original Question: {request.question}
+                Candidate Answer: {request.answer} 
+                Role: {role}
+                Interview type: {interview_type}
+                """
+        )
+    # Raise error if model is unavailable
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail= {
+                "result": "failure",
+                "message": "OpenAI client failed.",
+                "data": str(e)
+                }
+        )
     # Raise error if model output is incomplete
     if response.status == "incomplete":
         # Return HTTP 500 to indicate server-side failure and details for debugging

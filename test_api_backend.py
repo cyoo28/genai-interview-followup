@@ -102,6 +102,8 @@ def test_success():
         assert data["result"] == "success"
         # Check that there is at least one follow-up question returned
         assert len(data["data"]["followups"]) >= 1
+        # Check that output Content-Type header is application/json
+        assert response.headers["content-type"] == "application/json"
 
 # Test 2: Missing required field (question)
 def test_missing_required_field():
@@ -109,6 +111,8 @@ def test_missing_required_field():
     response = client.post("/interview/generate-followups", json=missing_question_request)
     # Check that FastAPI rejects request with 442 validation error
     assert response.status_code == 422
+    # Check that output Content-Type header is application/json
+    assert response.headers["content-type"] == "application/json"
 
 # Test 3: Invalid field type (interview_type should be a list of strings)
 def test_invalid_field_type():
@@ -116,6 +120,8 @@ def test_invalid_field_type():
     response = client.post("/interview/generate-followups", json=invalid_type_request)
     # Check that FastAPI rejects request with 442 validation error
     assert response.status_code == 422
+    # Check that output Content-Type header is application/json
+    assert response.headers["content-type"] == "application/json"
 
 # Test 4: Valid request with missing optional fields
 def test_missing_optional_fields():
@@ -134,8 +140,37 @@ def test_missing_optional_fields():
         assert data["result"] == "success"
         # Check that there is at least one follow-up question returned
         assert len(data["data"]["followups"]) >= 1
+        # Check that output Content-Type header is application/json
+        assert response.headers["content-type"] == "application/json"
 
-# Test 5: Model returns incomplete status
+# Test 5: GET method is not allowed
+def test_get_method_not_allowed():
+    # Make a request with the GET method
+    response = client.get("/interview/generate-followups")
+    # Check that FastAPI FastAPI rejects non-POST methods with 405
+    assert response.status_code == 405
+    # Check that output Content-Type header is application/json
+    assert response.headers["content-type"] == "application/json"
+
+# Test 6: Sending data with wrong Content-Type
+def test_wrong_content_type():
+    # Make a request as form-encoded instead of JSON
+    response = client.post("/interview/generate-followups", content="question=Hi&answer=Hello", headers={"Content-Type": "application/x-www-form-urlencoded"})
+    # Check that FastAPI rejects request with 442 validation error
+    assert response.status_code == 422
+    # Check that output Content-Type header is application/json
+    assert response.headers["content-type"] == "application/json"
+
+# Test 7: Empty json body
+def test_empty_json():
+    # Make a request with an empty json
+    response = client.post("/interview/generate-followups", json={})
+    # Check that FastAPI rejects request with 442 validation error
+    assert response.status_code == 422
+    # Check that output Content-Type header is application/json
+    assert response.headers["content-type"] == "application/json"
+
+# Test 8: Model returns incomplete status
 def test_incomplete_status():
     # Mock the OpenAI client to simulate an incomplete response
     with patch("api_backend.client.responses.create") as mock_create:
@@ -149,8 +184,10 @@ def test_incomplete_status():
         assert response.status_code == 500
         # Check for correct error message
         assert response.json()["detail"]["message"] == "Model output incomplete."
+        # Check that output Content-Type header is application/json
+        assert response.headers["content-type"] == "application/json"
 
-# Test 6: Model returns empty output
+# Test 9: Model returns empty output
 def test_empty_output():
     # Mock the OpenAI client to simulate an empty output
     with patch("api_backend.client.responses.create") as mock_create:
@@ -164,8 +201,10 @@ def test_empty_output():
         assert response.status_code == 500
         # Check for correct error message
         assert response.json()["detail"]["message"] == "Model returned empty output."
+        # Check that output Content-Type header is application/json
+        assert response.headers["content-type"] == "application/json"
 
-# Test 7: Model returns invalid JSON or unexpected structure (list of dicts instead of JSON)
+# Test 10: Model returns invalid JSON or unexpected structure (list of dicts instead of JSON)
 def test_invalid_output():
     # Mock the OpenAI client to simulate an invalid output format
     with patch("api_backend.client.responses.create") as mock_create:
@@ -179,8 +218,10 @@ def test_invalid_output():
         assert response.status_code == 500
         # Check for correct error message
         assert response.json()["detail"]["message"] == "Failed to parse output text." 
+        # Check that output Content-Type header is application/json
+        assert response.headers["content-type"] == "application/json"
 
-# Test 8: Model returns empty follow-ups list
+# Test 11: Model returns empty follow-ups list
 def test_empty_followups():
     # Mock the OpenAI client to simulate an empty follow-ups list
     with patch("api_backend.client.responses.create") as mock_create:
@@ -194,3 +235,18 @@ def test_empty_followups():
         assert response.status_code == 500
         # Check for correct error message
         assert response.json()["detail"]["message"] == "Model returned empty follow-ups list." 
+        # Check that output Content-Type header is application/json
+        assert response.headers["content-type"] == "application/json"
+
+# Test 12: OpenAI exception handling
+def test_openai_exception():
+    # Mock the OpenAI client to simulate an exception being thrown
+    with patch("api_backend.client.responses.create", side_effect=Exception("API down")):
+        # Make a request with a complete request
+        response = client.post("/interview/generate-followups", json=complete_request)
+        # Check for HTTP 500 error code
+        assert response.status_code == 500
+        # Check for correct error message
+        assert response.json()["detail"]["message"] == "OpenAI client failed." 
+        # Check that output Content-Type header is application/json
+        assert response.headers["content-type"] == "application/json"
