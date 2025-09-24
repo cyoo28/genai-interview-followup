@@ -10,18 +10,18 @@ Payload:
   ]
 }
 
-Follow-up: Can you describe the RAG pipeline you implemented — choice of vector DB, embedding model, chunking strategy, and how you handle retrieval relevance and latency?
-Rationale: This clarifies the technical choices and trade-offs that affect retrieval accuracy and system performance.
-Max Cosine Sim: 0.493
+Follow-up: What evaluation metrics and tests did you use to measure accuracy, safety, and conversational quality of the chatbot?
+Rationale: This reveals how you validated model performance and safety in a production setting.
+Max Cosine Sim: 0.489
 Status: PASSED
 
-Follow-up: What specific prompt engineering patterns or templates did you design, and how did you measure their impact on accuracy, coherence, and user satisfaction?
-Rationale: This probes the concrete prompt techniques used and how you validated their effectiveness with metrics or user feedback.
-Max Cosine Sim: 0.616
+Follow-up: Can you describe the retrieval pipeline and knowledge sources used with RAG, and how you handled indexing, freshness, and relevance?
+Rationale: This clarifies the architecture and data management decisions behind your RAG implementation.
+Max Cosine Sim: 0.449
 Status: PASSED
 
-Follow-up: How did you implement and enforce guardrails across AWS Bedrock and Vertex AI (e.g., pre/post-processing, model filters, real-time monitoring), and how do you handle false positives that degrade UX?
-Rationale: This asks for operational details on safety controls and how you manage errors or user experience trade-offs.
-Max Cosine Sim: 0.727
+Follow-up: How did you implement guardrails in AWS Bedrock and Vertex AI—specifically the moderation models, enforcement logic, and any fallback or escalation paths?
+Rationale: This helps evaluate your approach to safety engineering and runtime enforcement.
+Max Cosine Sim: 0.756
 Status: PASSED
 

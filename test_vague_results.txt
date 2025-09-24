@@ -1,0 +1,27 @@
+Purpose: Testing the OpenAI API call in api_backend.py with a vague candidate answer
+Payload:
+{
+  "question": "Can you describe a project where you implemented AI or machine learning to solve a real-world problem?",
+  "answer": "I've worked on AI before.",
+  "role": "AI Engineer",
+  "interview_type": [
+    "Technical",
+    "Screening"
+  ]
+}
+
+Follow-up: Can you describe a specific AI/ML project you worked on, including the problem it addressed, the scope, and the outcome?
+Rationale: This clarifies which concrete project the candidate is referring to and what real-world problem they solved.
+Max Cosine Sim: 0.547
+Status: PASSED
+
+Follow-up: What was your exact role and which technical components, models, or algorithms did you implement or lead in that project?
+Rationale: This identifies the candidate's hands-on responsibilities and technical contribution relevant to an AI Engineer role.
+Max Cosine Sim: 0.399
+Status: FAILED
+
+Follow-up: How did you evaluate success—what metrics, results, or production/deployment considerations demonstrated the project’s impact?
+Rationale: This assesses measurable impact and whether the candidate handled evaluation and deployment aspects in a production context.
+Max Cosine Sim: 0.179
+Status: FAILED
+

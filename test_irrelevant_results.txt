@@ -1,0 +1,27 @@
+Purpose: Testing the OpenAI API call in api_backend.py with an irrelevant candidate answer
+Payload:
+{
+  "question": "Can you describe a project where you implemented AI or machine learning to solve a real-world problem?",
+  "answer": "I enjoy playing basketball and hiking on weekends.",
+  "role": "AI Engineer",
+  "interview_type": [
+    "Technical",
+    "Screening"
+  ]
+}
+
+Follow-up: Can you describe a specific AI/ML project you worked on, the real-world problem it addressed, and your role on the team?
+Rationale: The original question asked for a project but the candidate's answer discussed hobbies; this asks for the missing project details and their responsibilities.
+Max Cosine Sim: 0.097
+Status: FAILED
+
+Follow-up: What data sources and model types did you use, and how did you measure the model's performance after deployment?
+Rationale: Asking about data, models, and evaluation helps assess technical choices and how success was validated in a production setting.
+Max Cosine Sim: 0.036
+Status: FAILED
+
+Follow-up: What technical or operational challenges did you face during development or deployment, and how did you address them?
+Rationale: Understanding encountered challenges and resolutions reveals problem-solving skills and production-readiness experience relevant to an AI Engineer role.
+Max Cosine Sim: 0.053
+Status: FAILED
+
