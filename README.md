@@ -40,7 +40,41 @@ The solution was designed to generate relevant follow-up interview questions fro
   Example command to run locally:
   ```bash
   uvicorn api_backend:app --reload
-
+  ```
+  Once running you can reach the endpoint with a basic command like this:
+  ```bash
+  curl -X POST http://localhost:8000/interview/generate-followups \
+    -H "Content-Type: application/json" \
+    -d '{
+          "question": "Can you describe a project where you implemented AI or machine learning?",
+          "answer": "I developed a chatbot using large language models for customer support.",
+          "role": "AI Engineer",
+          "interview_type": ["Technical", "Screening"]
+        }'
+  ```
+  and you should get a result like this:
+  ```json
+  {
+    "result": "success",
+    "message": "Follow-up question generated.",
+    "data": {
+      "followups": [
+        {
+          "followup_question": "Which LLM(s) and model sizes did you use, and did you fine-tune them or rely primarily on prompting and retrieval augmentation?",
+          "rationale": "To assess your technical decisions around model selection and customization for the customer support use case."
+        },
+        {
+          "followup_question": "What data sources and annotation processes did you use to train or adapt the chatbot, and how did you address data quality and privacy concerns?",
+          "rationale": "To understand how you prepared training data and ensured it was appropriate and compliant for production use."
+        },
+        {
+          "followup_question": "How did you evaluate the chatbot's performance (metrics, testing, or user feedback), and what key results or limitations did you observe after deployment?",
+          "rationale": "To gauge your approach to validating effectiveness and identifying areas needing improvement in a production setting."
+        }
+      ]
+    }
+  }
+  ```
 ## Testing
 This project includes tests to validate the FastAPI backend and the OpenAI API integration. These tests ensure that the backend behaves as expected for various inputs.
 
